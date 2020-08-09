@@ -21,8 +21,16 @@ todayDate = datetime.date.today()
 reservations[1][todayDate] = { 
     8: 'mihika', 
     9: 'sharad'}
+
 reservations[1][todayDate][10] = 'shrey'
 
+@app.route('/')
+def login():
+    return render_template('login.html')
+
+
+
+    
 @app.route('/view/court/<int:court_num>/<date>', methods=['GET'])    #every variable in URL has to be defined as a function argument
 def viewForParticularDay(court_num, date):
     try:
