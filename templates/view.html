@@ -15,12 +15,14 @@
     </form>     
     
 	{% for i in range(24) %}
-		<form action='/view/court/{{num}}/{{day}}/hour/{{i}}' method='post'>
 		{% if i not in daySched %}
-			{{i}}: <input type='text' name='user'> <input type='submit' value='Reserve!'> <br> 
+			<form action='/view/court/{{num}}/{{day}}/hour/{{i}}' method='post'>
+			{{i}}: <input type='text' name='user'> <input type='submit' value='Reserve!'> <br>
+			</form>
 		{%else%}
-			{{i}}: {{daySched[i]}} <br>
+			<form action='/cancel/court/{{num}}/{{day}}/hour/{{i}}' method='post'>
+			{{i}}: {{daySched[i]}} <input type='submit' value='Cancel'> <br>
+			</form>
 		{%endif%}
-		</form>
 	{%endfor%}
 </HTML>

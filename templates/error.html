@@ -1,7 +1,23 @@
 <HTML>
       {% if invalidCourt %}
-         {{invalidCourt}} is an invalid court.
+         {{invalidCourt}} is an invalid court. <br>
+         <form action='/view/court/1/{{todayDateAsString}}' method='get'>
+			<input type='submit' value='Back'>
+    	 </form>    
       {% elif invalidDate %}
          {{invalidDate}} is an invalid date.
+         <form action='/view/court/{{court}}' method='get'>
+			<input type='submit' value='Back'>
+    	 </form>  
+      {% elif invalidHour %}
+      	 {{invalidHour}} is an invalid hour.
+      	 <form action='/view/court/{{court}}/{{todayDateAsString}}' method='get'>
+			<input type='submit' value='Back'>
+    	 </form>
+      {%elif invalidName%}
+      	Please enter a valid name.
+        <form action='/view/court/{{court}}/{{todayDateAsString}}' method='get'>
+			<input type='submit' value='Back'>
+    	 </form> 	 
       {% endif %}
 </HTML>
