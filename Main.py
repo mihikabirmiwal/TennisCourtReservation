@@ -1,15 +1,13 @@
 from User import User
-from flask_login import LoginManager, login_user, login_required
-from flask import Flask, request, render_template
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from flask import Flask, request, render_template, redirect
 import datetime
-
 
 app=Flask("Tennis Reservation")
 app.secret_key='very secret'
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-
 
 #key=court number
 #value=dictionary
@@ -24,21 +22,29 @@ reservations = {1: {},
     }
 #key=username
 #value=user object
-accounts = {'mihika': User('mihika', 'fluffyducks', 1, datetime.date.fromisoformat('2020-07-27')) }
+accounts = {'mihika': User('mihika', 'fluffyducks', 1, datetime.date.fromisoformat('2020-07-27'), False)}
 
 todayDate = datetime.date.today()
 reservations[1][todayDate] = { 
     8: 'mihika', 
     9: 'sharad'}
-
 reservations[1][todayDate][10] = 'shrey'
 
-@app.route('/')
+#not linked to a url, is a helper function that returns the user corresponsing to a userid
+@login_manager.user_loader
+def load_user(user_id):
+    for user in accounts.values():
+        if user.get_id() == str(user_id):
+            return user
+    return None
+
+@app.route('/', methods=['GET'])
 def loginPage():
     return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
 def login():
+    todayDateAsString = todayDate.isoformat()
     username = request.form['user']
     password = request.form['pass']
     if username not in accounts:
@@ -47,7 +53,13 @@ def login():
         return render_template('error.html', invalidPassword=password)
     user = accounts[username]
     login_user(user)
-    return viewForToday(1)
+    return redirect('view/court/1')
+
+@app.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect('/')
     
 @app.route('/view/court/<int:court_num>/<date>', methods=['GET'])    #every variable in URL has to be defined as a function argument
 @login_required
@@ -60,7 +72,13 @@ def viewForParticularDay(court_num, date):
         return render_template('error.html', invalidCourt=str(court_num), todayDateAsString=date)
     pDay = inputDate-datetime.timedelta(days=1)
     nDay = inputDate+datetime.timedelta(days=1)  
-    return render_template('view.html', daySched=reservations[court_num].get(inputDate,{}), day=inputDate, num=court_num, prevDay=pDay, nextDay=nDay)  #sends the dictionary for the day's reservations  
+    return render_template('view.html',
+                           name=current_user.username,
+                           daySched=reservations[court_num].get(inputDate,{}),
+                           day=inputDate,
+                           num=court_num,
+                           prevDay=pDay,
+                           nextDay=nDay)  #sends the dictionary for the day's reservations  
 
 @app.route('/view/court/<int:court_num>', methods=['GET'])
 @login_required
@@ -80,13 +98,11 @@ def reserveCourt(court_num, date, hour):
         inputDate = datetime.date.fromisoformat(date)
     except:
         return render_template('error.html', invalidDate=date, court=court_num)
-    if not request.form['user']:
-        return render_template('error.html', invalidName='bad', court=court_num, todayDateAsString=date)  
     if (court_num not in reservations):
         return render_template('error.html', invalidCourt=str(court_num), todayDateAsString=date)
     if inputDate not in reservations[court_num]:
         reservations[court_num][inputDate]={}
-    reservations[court_num][inputDate][hour] = request.form['user']
+    reservations[court_num][inputDate][hour] = current_user.username
     return viewForParticularDay(court_num, date)
 
 #if i changed the cancel part of this url to be view, how would the view.html know which method to go to?
@@ -104,4 +120,5 @@ def deleteReservation(court_num, date, hour):
     if hour not in reservations[court_num][inputDate]:
         return render_template('error.html', invalidHour=str(hour), todayDateAsString=date, court=court_num)
     del reservations[court_num][inputDate][hour]
-    return viewForParticularDay(court_num, date)
+    return redirect('/view/court/<int:court_num>/<date>', court_num, date)
+    # return viewForParticularDay(court_num, date)
