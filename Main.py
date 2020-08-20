@@ -1,6 +1,6 @@
 from User import User
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from flask import Flask, request, render_template, redirect
+from flask import Flask, request, render_template, redirect, url_for
 import datetime
 
 app=Flask("Tennis Reservation")
@@ -59,7 +59,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect('/')
+    return redirect(url_for('loginPage'))
     
 @app.route('/view/court/<int:court_num>/<date>', methods=['GET'])    #every variable in URL has to be defined as a function argument
 @login_required
@@ -87,7 +87,7 @@ def viewForToday(court_num):
     todayDateString = todayDate.isoformat()  
     if court_num not in reservations:
         return render_template('error.html', invalidCourt=str(court_num), todayDateAsString=todayDateString)
-    return viewForParticularDay(court_num, todayDateString)
+    return redirect(url_for('viewForParticularDay', court_num=court_num, date=todayDateString))
 
 #this is where the reservation is made, not at view.html
 #receives the post request
@@ -103,7 +103,7 @@ def reserveCourt(court_num, date, hour):
     if inputDate not in reservations[court_num]:
         reservations[court_num][inputDate]={}
     reservations[court_num][inputDate][hour] = current_user.username
-    return viewForParticularDay(court_num, date)
+    return redirect(url_for('viewForParticularDay', court_num=court_num, date=date))
 
 #if i changed the cancel part of this url to be view, how would the view.html know which method to go to?
 @app.route('/cancel/court/<int:court_num>/<date>/hour/<int:hour>', methods=['POST'])
@@ -120,5 +120,4 @@ def deleteReservation(court_num, date, hour):
     if hour not in reservations[court_num][inputDate]:
         return render_template('error.html', invalidHour=str(hour), todayDateAsString=date, court=court_num)
     del reservations[court_num][inputDate][hour]
-    return redirect('/view/court/<int:court_num>/<date>', court_num, date)
-    # return viewForParticularDay(court_num, date)
+    return redirect(url_for('viewForParticularDay', court_num=court_num, date=date))
