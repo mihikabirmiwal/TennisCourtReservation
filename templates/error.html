@@ -19,6 +19,11 @@
       <form action='/' method='get'>
 	<input type='submit' value='Back'>
       </form>
+      {% elif tooManyHours %}
+      You have booked the maximum number of hours for {{todayDateAsString}}.
+      <form action='/view/court/{{court}}/{{todayDateAsString}}' method='get'>
+	<input type='submit' value='Back'>
+      </form>
       {% elif invalidHour %}
       {{invalidHour}} is an invalid hour.
       <form action='/view/court/{{court}}/{{todayDateAsString}}' method='get'>

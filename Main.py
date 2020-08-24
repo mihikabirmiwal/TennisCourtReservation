@@ -22,13 +22,13 @@ reservations = {1: {},
     }
 #key=username
 #value=user object
-accounts = {'mihika': User('mihika', 'fluffyducks', 1, datetime.date.fromisoformat('2020-07-27'), False)}
+accounts = {'mihika': User('mihika', 'fluffyducks', 1, False, {})}
 
 todayDate = datetime.date.today()
-reservations[1][todayDate] = { 
-    8: 'mihika', 
-    9: 'sharad'}
-reservations[1][todayDate][10] = 'shrey'
+#reservations[1][todayDate] = { 
+#    8: 'mihika', 
+#    9: 'sharad'}
+#reservations[1][todayDate][10] = 'shrey'
 
 #not linked to a url, is a helper function that returns the user corresponsing to a userid
 @login_manager.user_loader
@@ -102,7 +102,16 @@ def reserveCourt(court_num, date, hour):
         return render_template('error.html', invalidCourt=str(court_num), todayDateAsString=date)
     if inputDate not in reservations[court_num]:
         reservations[court_num][inputDate]={}
+    if current_user.hasBooked2Hours(inputDate):
+        return render_template('error.html', tooManyHours='yes', court=court_num, todayDateAsString=date)
     reservations[court_num][inputDate][hour] = current_user.username
+    pastReserve = current_user.get_pastReservations()
+    if inputDate not in pastReserve:
+        pastReserve[inputDate] = {}
+    if court_num not in pastReserve[inputDate]:
+        pastReserve[inputDate][court_num] = set()
+    pastReserve[inputDate][court_num].add(hour)
+    current_user.set_pastReservations(pastReserve)
     return redirect(url_for('viewForParticularDay', court_num=court_num, date=date))
 
 #if i changed the cancel part of this url to be view, how would the view.html know which method to go to?
@@ -120,4 +129,7 @@ def deleteReservation(court_num, date, hour):
     if hour not in reservations[court_num][inputDate]:
         return render_template('error.html', invalidHour=str(hour), todayDateAsString=date, court=court_num)
     del reservations[court_num][inputDate][hour]
+    pastReserve = current_user.get_pastReservations()
+    pastReserve[inputDate][court_num].remove(hour)
+    current_user.set_pastReservations(pastReserve)
     return redirect(url_for('viewForParticularDay', court_num=court_num, date=date))
