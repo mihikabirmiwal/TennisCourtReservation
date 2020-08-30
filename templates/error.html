@@ -29,6 +29,11 @@
       <form action='/view/court/{{court}}/{{todayDateAsString}}' method='get'>
 	<input type='submit' value='Back'>
       </form>
+      {% elif invalidDelete %}
+      You are not permitted to delete that reservation.
+      <form action='/view/court/{{court}}/{{todayDateAsString}}' method='get'>
+	<input type='submit' value='Back'>
+      </form>
       {% elif invalidName %}
       Please enter a valid name.
       <form action='view/court/{{court}}/{{todayDateAsString}}' method='get'>

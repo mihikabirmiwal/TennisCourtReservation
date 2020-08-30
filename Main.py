@@ -22,7 +22,7 @@ reservations = {1: {},
     }
 #key=username
 #value=user object
-accounts = {'mihika': User('mihika', 'fluffyducks', 1, False, {})}
+accounts = {'mihika': User('mihika', 'fluffyducks', 1, 0, {})}
 
 todayDate = datetime.date.today()
 #reservations[1][todayDate] = { 
@@ -102,7 +102,7 @@ def reserveCourt(court_num, date, hour):
         return render_template('error.html', invalidCourt=str(court_num), todayDateAsString=date)
     if inputDate not in reservations[court_num]:
         reservations[court_num][inputDate]={}
-    if current_user.hasBooked2Hours(inputDate):
+    if (current_user.hasBooked2Hours(inputDate) and current_user.isAdmin == 0):
         return render_template('error.html', tooManyHours='yes', court=court_num, todayDateAsString=date)
     reservations[court_num][inputDate][hour] = current_user.username
     pastReserve = current_user.get_pastReservations()
@@ -128,6 +128,8 @@ def deleteReservation(court_num, date, hour):
         return render_template('error.html', invalidDate=date, court=court_num)
     if hour not in reservations[court_num][inputDate]:
         return render_template('error.html', invalidHour=str(hour), todayDateAsString=date, court=court_num)
+    if(reservations[court_num][inputDate][hour] != current_user.username and current_user.isAdmin == 0):
+        return render_template('error.html', invalidDelete='yes', court=court_num, todayDateAsString=date)
     del reservations[court_num][inputDate][hour]
     pastReserve = current_user.get_pastReservations()
     pastReserve[inputDate][court_num].remove(hour)
