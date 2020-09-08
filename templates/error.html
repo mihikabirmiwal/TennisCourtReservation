@@ -9,13 +9,8 @@
       <form action='/view/court/{{court}}' method='get'>
 	<input type='submit' value='Back'>
       </form>
-      {% elif invalidUsername%}
-      {{invalidUsername}} is not an approved member.
-      <form action='/' method='get'>
-	<input type='submit' value='Back'>
-      </form>
-      {% elif invalidPassword %}
-      You have entered the wrong password.
+      {% elif invalidLogin%}
+      Invalid login credentials!
       <form action='/' method='get'>
 	<input type='submit' value='Back'>
       </form>

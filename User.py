@@ -4,7 +4,8 @@ class User():
                  password,
                  idNumber,
                  isAdmin,
-                 pastReservations):
+                 pastReservations
+    ):
         self.username = username
         self.password = password
         self.idNumber = idNumber

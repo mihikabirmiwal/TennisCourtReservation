@@ -2,40 +2,35 @@ from User import User
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask import Flask, request, render_template, redirect, url_for
 import datetime
+import MySQLdb
 
-app=Flask("Tennis Reservation")
-app.secret_key='very secret'
+app = Flask("Tennis Reservation")
+app.secret_key = 'very secret'
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-
-#key=court number
-#value=dictionary
-#      key=datetime.date object
-#      value=dictionary
-#            key=hour (int from 0-23) 
-#            value=name of person who reserved it (string)
+db = MySQLdb.connect(host='localhost',
+                     user='tennis',
+                     passwd='FluffyDuck$1',
+                     db='tennisCourts')
+cursor = db.cursor()
 reservations = {1: {},
                 2: {},
                 3: {},
                 4: {},    
     }
-#key=username
-#value=user object
-accounts = {'mihika': User('mihika', 'fluffyducks', 1, 0, {})}
-
 todayDate = datetime.date.today()
-#reservations[1][todayDate] = { 
-#    8: 'mihika', 
-#    9: 'sharad'}
-#reservations[1][todayDate][10] = 'shrey'
 
 #not linked to a url, is a helper function that returns the user corresponsing to a userid
 @login_manager.user_loader
 def load_user(user_id):
-    for user in accounts.values():
-        if user.get_id() == str(user_id):
-            return user
+    cmd = "select * from users where id={idNum};".format(idNum=user_id)
+    cursor.execute(cmd)
+    if cursor.rowcount != 0:
+        rows = cursor.fetchall()
+        row = rows[0]
+        user = User(row[1], row[2], row[0], row[3], None)
+        return user
     return None
 
 @app.route('/', methods=['GET'])
@@ -45,13 +40,17 @@ def loginPage():
 @app.route('/login', methods=['POST'])
 def login():
     todayDateAsString = todayDate.isoformat()
-    username = request.form['user']
-    password = request.form['pass']
-    if username not in accounts:
-        return render_template('error.html', invalidUsername=username)
-    if accounts[username].password != password:
-        return render_template('error.html', invalidPassword=password)
-    user = accounts[username]
+    uname = request.form['user']
+    pwd = request.form['pass']
+    print(uname)
+    print(pwd)
+    cmd = "select * from users where username='{username}' and password='{password}';".format(username=uname, password=pwd)
+    cursor.execute(cmd)
+    if cursor.rowcount == 0:
+        return render_template('error.html', invalidLogin='yes')
+    rows = cursor.fetchall()
+    row = rows[0]
+    user = User(row[1], row[2], row[0], row[3], None)
     login_user(user)
     return redirect('view/court/1')
 
@@ -68,7 +67,13 @@ def viewForParticularDay(court_num, date):
         inputDate = datetime.date.fromisoformat(date)
     except:
         return render_template('error.html', invalidDate=date, court=court_num)
-    if (court_num not in reservations):
+    checkCourt = "select * from courts where id='{court}';".format(court=court_num)
+    cursor.execute(checkCourt)
+    if (cursor.rowcount == 0):
+        return render_template('error.html', invalidCourt=str(court_num), todayDateAsString=date)
+    cmd = "select * from reservations where courtId='{court}' and date='{date}';".format(court=court_num, date=date)
+    cursor.execute(cmd)
+    if cursor.rowcount == 0:
         return render_template('error.html', invalidCourt=str(court_num), todayDateAsString=date)
     pDay = inputDate-datetime.timedelta(days=1)
     nDay = inputDate+datetime.timedelta(days=1)  
